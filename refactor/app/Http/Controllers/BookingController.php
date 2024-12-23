@@ -12,6 +12,8 @@ use DTApi\Repository\BookingRepository;
  * Class BookingController
  * @package DTApi\Http\Controllers
  */
+
+// It is better if we include only relevant methods in one controller like sendSMS function should invoke in separate controller
 class BookingController extends Controller
 {
 
@@ -35,16 +37,15 @@ class BookingController extends Controller
      */
     public function index(Request $request)
     {
-        if($user_id = $request->get('user_id')) {
-
+        $response = [];
+        // this code can utilize when eloquent method
+        if ($user_id = $request->get('user_id')) {
             $response = $this->repository->getUsersJobs($user_id);
-
-        }
-        elseif($request->__authenticatedUser->user_type == env('ADMIN_ROLE_ID') || $request->__authenticatedUser->user_type == env('SUPERADMIN_ROLE_ID'))
-        {
+        } elseif (in_array($request->__authenticatedUser->user_type, [env('ADMIN_ROLE_ID'), env('SUPERADMIN_ROLE_ID')], true)) {
             $response = $this->repository->getAll($request);
         }
 
+        // response maybe undefined
         return response($response);
     }
 
@@ -62,9 +63,11 @@ class BookingController extends Controller
     /**
      * @param Request $request
      * @return mixed
+     * Instead of using Request, Make a Request via artisan make:request and validate stuff there
      */
     public function store(Request $request)
     {
+        // one of the benefit of using form request you can use $request->validated() method for security concerns
         $data = $request->all();
 
         $response = $this->repository->store($request->__authenticatedUser, $data);
@@ -77,6 +80,7 @@ class BookingController extends Controller
      * @param $id
      * @param Request $request
      * @return mixed
+     * TODO: use route-model binding instead of find method
      */
     public function update($id, Request $request)
     {
@@ -107,7 +111,7 @@ class BookingController extends Controller
      */
     public function getHistory(Request $request)
     {
-        if($user_id = $request->get('user_id')) {
+        if ($user_id = $request->get('user_id')) {
 
             $response = $this->repository->getUsersJobsHistory($user_id, $request);
             return response($response);
@@ -217,12 +221,13 @@ class BookingController extends Controller
         }
 
         if ($data['flagged'] == 'true') {
-            if($data['admincomment'] == '') return "Please, add comment";
+            if ($data['admincomment'] == '')
+                return "Please, add comment";
             $flagged = 'yes';
         } else {
             $flagged = 'no';
         }
-        
+
         if ($data['manually_handled'] == 'true') {
             $manually_handled = 'yes';
         } else {
